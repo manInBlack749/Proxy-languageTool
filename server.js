@@ -34,7 +34,7 @@ async function correctTextWithDeepSeek(text) {
                 model: "deepseek-chat-v3.1:free",
                 messages: [{
                     role: "user",
-                    content: `Corrige absolument toutes les fautes d'orthographe, de grammaire et de sens dans ce texte : "${text}"`
+                    content: `Corrige toutes les fautes d'orthographe et de grammaire, mets les accents correctement, même pour les petites erreurs dans ce texte : "${text}"`
                 }]
             })
         });
