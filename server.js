@@ -1,4 +1,4 @@
-// server.js (version test DeepSeek pour Android)
+ // server.js (version test DeepSeek avec debug complet)
 const express = require("express");
 const bodyParser = require("body-parser");
 const fetch = require("node-fetch");
@@ -6,7 +6,7 @@ const fetch = require("node-fetch");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Récupération de la clé API depuis Render
+// Clé API DeepSeek depuis Render
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
 if (!DEEPSEEK_API_KEY) {
@@ -46,9 +46,15 @@ async function getJesusStory() {
       })
     });
 
+    // Vérifie si la requête a réussi
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`HTTP ${response.status} : ${text}`);
+    }
+
     const data = await response.json();
 
-    // Debug : afficher la réponse brute
+    // Affiche la réponse brute pour debug
     console.log("📝 Réponse brute DeepSeek:", JSON.stringify(data, null, 2));
 
     if (data.choices && data.choices.length > 0) {
@@ -57,8 +63,8 @@ async function getJesusStory() {
       return "⚠ DeepSeek n'a rien renvoyé.";
     }
   } catch (err) {
-    console.error("❌ Erreur DeepSeek :", err);
-    return "⚠ Erreur lors de l'appel à DeepSeek.";
+    console.error("❌ Erreur DeepSeek :", err.message);
+    return `⚠ Erreur lors de l'appel à DeepSeek : ${err.message}`;
   }
 }
 
@@ -77,4 +83,4 @@ app.post("/correct", async (req, res) => {
 // Lancement du serveur
 app.listen(PORT, () => {
   console.log(`🚀 Serveur test DeepSeek en ligne sur le port ${PORT}`);
-});
+});   
