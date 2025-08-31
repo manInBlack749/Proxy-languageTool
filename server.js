@@ -1,16 +1,20 @@
-
 // server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 
-// ⚡ Import node-fetch compatible Node 22
+// Import compatible Node 22
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Ta clé DeepSeek
-const DEEPSEEK_API_KEY = process.env.DEESEEK_API_KEY || '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';
+// ⚠ Clé API DeepSeek / OpenRouter depuis variable d'environnement
+const DEEPSEEK_API_KEY = process.env.DEESEEK_API_KEY;
+
+if (!DEEPSEEK_API_KEY) {
+    console.error("⚠ Attention : DEEPSEEK_API_KEY non défini !");
+    process.exit(1); // Stoppe le serveur si pas de clé
+}
 
 // Middleware JSON
 app.use(bodyParser.json());
@@ -18,12 +22,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Route GET test
 app.get('/', (req, res) => {
-    res.send('Le serveur fonctionne ! Utilise POST /correct pour corriger le texte.');
+    res.send('Serveur DeepSeek actif ! POST /correct pour corriger le texte.');
 });
 
-// Appel DeepSeek
+// Fonction pour corriger le texte via DeepSeek
 async function correctTextWithDeepSeek(text) {
     try {
+        console.log("Envoi au serveur DeepSeek :", text);
+
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -34,25 +40,27 @@ async function correctTextWithDeepSeek(text) {
                 model: "deepseek-chat-v3.1:free",
                 messages: [{
                     role: "user",
-                    content: `Corrige toutes les fautes d'orthographe et de grammaire, mets les accents correctement, même pour les petites erreurs dans ce texte : "${text}"`
+                    content: `Corrige absolument toutes les fautes d'orthographe, de grammaire et de sens, mets les accents correctement, même les petites erreurs dans ce texte : "${text}"`
                 }]
             })
         });
 
         const data = await response.json();
+        console.log("Réponse DeepSeek brute :", data);
 
         if (data.choices && data.choices.length > 0) {
             return data.choices[0].message.content;
         } else {
-            return text;
+            return text; // Retourne le texte original si DeepSeek ne renvoie rien
         }
+
     } catch (err) {
         console.error('Erreur DeepSeek :', err);
         return text;
     }
 }
 
-// Route POST correction
+// Route POST pour corriger le texte
 app.post('/correct', async (req, res) => {
     try {
         const text = req.body.text;
@@ -60,6 +68,7 @@ app.post('/correct', async (req, res) => {
 
         const corrected = await correctTextWithDeepSeek(text);
         res.json({ corrected });
+
     } catch (err) {
         console.error('Erreur serveur :', err);
         res.status(500).json({ error: err.message });
@@ -70,4 +79,3 @@ app.post('/correct', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Serveur DeepSeek en ligne sur le port ${PORT}`);
 });
-        
