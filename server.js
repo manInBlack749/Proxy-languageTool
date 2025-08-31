@@ -1,24 +1,27 @@
-// server.js ok
+
+// server.js
 const express = require('express');
 const bodyParser = require('body-parser');
-const fetch = require('node-fetch');
+
+// ⚡ Import node-fetch compatible Node 22
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Remplace par ta clé API DeepSeek
+// Ta clé DeepSeek
 const DEEPSEEK_API_KEY = process.env.DEESEEK_API_KEY || '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';
 
-// Middleware pour parser JSON
+// Middleware JSON
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Route GET de test
+// Route GET test
 app.get('/', (req, res) => {
     res.send('Le serveur fonctionne ! Utilise POST /correct pour corriger le texte.');
 });
 
-// Fonction pour appeler DeepSeek
+// Appel DeepSeek
 async function correctTextWithDeepSeek(text) {
     try {
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -28,18 +31,20 @@ async function correctTextWithDeepSeek(text) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-            model: "deepseek-chat-v3.1:free",
-            messages: [{
-            role: "user",
-            content: `Corrige absolument toutes les fautes d'orthographe, de grammaire et les accents dans ce texte : "${text}"`
-            }]
-            });
+                model: "deepseek-chat-v3.1:free",
+                messages: [{
+                    role: "user",
+                    content: `Corrige absolument toutes les fautes d'orthographe, de grammaire et de sens dans ce texte : "${text}"`
+                }]
+            })
+        });
 
         const data = await response.json();
+
         if (data.choices && data.choices.length > 0) {
             return data.choices[0].message.content;
         } else {
-            return text; // Retourne le texte original si DeepSeek ne renvoie rien
+            return text;
         }
     } catch (err) {
         console.error('Erreur DeepSeek :', err);
@@ -47,7 +52,7 @@ async function correctTextWithDeepSeek(text) {
     }
 }
 
-// Route POST pour corriger le texte
+// Route POST correction
 app.post('/correct', async (req, res) => {
     try {
         const text = req.body.text;
@@ -61,7 +66,8 @@ app.post('/correct', async (req, res) => {
     }
 });
 
-// Démarrer le serveur
+// Démarrer serveur
 app.listen(PORT, () => {
     console.log(`Serveur DeepSeek en ligne sur le port ${PORT}`);
 });
+        
