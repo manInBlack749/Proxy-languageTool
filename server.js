@@ -1,4 +1,4 @@
-// server.js
+// server.js (version test DeepSeek)
 const express = require("express");
 const bodyParser = require("body-parser");
 const fetch = require("node-fetch");
@@ -6,82 +6,74 @@ const fetch = require("node-fetch");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Récupère ta clé API depuis Render (Dashboard -> Environment)
+// Récupération de la clé API depuis Render
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
 if (!DEEPSEEK_API_KEY) {
-  console.error("❌ ERREUR : DEEPSEEK_API_KEY n'est pas défini !");
+  console.error("❌ ERREUR : DEEPSEEK_API_KEY non défini !");
   process.exit(1);
 }
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Route test
+// Route test GET
 app.get("/", (req, res) => {
-  res.send("✅ Serveur en ligne ! Utilise POST /correct pour corriger du texte.");
+  res.send("✅ Serveur test DeepSeek en ligne ! POST /correct pour tester.");
 });
 
-// Fonction correction via DeepSeek
-async function correctTextWithDeepSeek(text) {
+// Fonction qui appelle DeepSeek pour raconter l'histoire de Jésus
+async function getJesusStory() {
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
-        "Content-Type": "application/json",
+        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model: "deepseek-chat-v3.1:free",
         messages: [
           {
             role: "system",
-            content:
-              "Tu es un correcteur automatique de texte en français. Corrige toutes les fautes de grammaire, orthographe et conjugaison, sans changer le sens du texte. Même si le texte est correct, renvoie-le.",
+            content: "Tu es un conteur. Raconte l'histoire de Jésus de manière claire et détaillée."
           },
-          { role: "user", content: text },
-        ],
-      }),
+          {
+            role: "user",
+            content: "Peu importe le texte que je t'envoie, raconte-moi l'histoire de Jésus."
+          }
+        ]
+      })
     });
 
     const data = await response.json();
 
-    // Debug : affiche toute la réponse de DeepSeek
+    // Debug : afficher la réponse brute
     console.log("📝 Réponse brute DeepSeek:", JSON.stringify(data, null, 2));
 
-    // Vérifie si DeepSeek a renvoyé quelque chose
     if (data.choices && data.choices.length > 0) {
-      // Selon le format exact, ça peut être `message.content`
-      const result =
-        data.choices[0].message?.content ||
-        data.choices[0].messages?.[0]?.content ||
-        text;
-
-      return result.trim();
+      return data.choices[0].message.content.trim();
     } else {
-      return text;
+      return "⚠ DeepSeek n'a rien renvoyé.";
     }
   } catch (err) {
     console.error("❌ Erreur DeepSeek :", err);
-    return text;
+    return "⚠ Erreur lors de l'appel à DeepSeek.";
   }
 }
 
-// Route correction
+// Route POST /correct pour test
 app.post("/correct", async (req, res) => {
   try {
-    const text = req.body.text;
-    if (!text) return res.status(400).json({ error: "Aucun texte fourni" });
-
-    const corrected = await correctTextWithDeepSeek(text);
-    res.json({ corrected });
+    const story = await getJesusStory();
+    res.json({ story });
   } catch (err) {
     console.error("❌ Erreur serveur :", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Lancement serveur
+// Lancement du serveur
 app.listen(PORT, () => {
-  console.log(`🚀 Serveur DeepSeek en ligne sur le port ${PORT}`);
+  console.log(`🚀 Serveur test DeepSeek en ligne sur le port ${PORT}`);
 });
