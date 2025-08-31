@@ -28,10 +28,12 @@ async function correctTextWithDeepSeek(text) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: "deepseek-chat-v3.1:free",
-                messages: [{ role: "user", content: `Corrige le texte suivant : "${text}"` }]
-            })
-        });
+            model: "deepseek-chat-v3.1:free",
+            messages: [{
+            role: "user",
+            content: `Corrige absolument toutes les fautes d'orthographe, de grammaire et les accents dans ce texte : "${text}"`
+            }]
+            });
 
         const data = await response.json();
         if (data.choices && data.choices.length > 0) {
