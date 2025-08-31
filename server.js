@@ -1,4 +1,4 @@
-// server.js (version test DeepSeek)
+// server.js (version test DeepSeek pour Android)
 const express = require("express");
 const bodyParser = require("body-parser");
 const fetch = require("node-fetch");
@@ -17,12 +17,12 @@ if (!DEEPSEEK_API_KEY) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Route test GET
+// Route GET test
 app.get("/", (req, res) => {
   res.send("✅ Serveur test DeepSeek en ligne ! POST /correct pour tester.");
 });
 
-// Fonction qui appelle DeepSeek pour raconter l'histoire de Jésus
+// Fonction pour obtenir l'histoire de Jésus depuis DeepSeek
 async function getJesusStory() {
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -66,7 +66,8 @@ async function getJesusStory() {
 app.post("/correct", async (req, res) => {
   try {
     const story = await getJesusStory();
-    res.json({ story });
+    // Renvoie dans le champ 'corrected' pour que l'app Android le lise
+    res.json({ corrected: story });
   } catch (err) {
     console.error("❌ Erreur serveur :", err);
     res.status(500).json({ error: err.message });
