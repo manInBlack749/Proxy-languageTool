@@ -7,6 +7,9 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+console.log("==== DEBUG ENV ====");
+console.log("process.env.DEEPSEEK_API_KEY:", process.env.DEEPSEEK_API_KEY);
+console.log("===================");
 
 // ⚠ Clé API DeepSeek / OpenRouter depuis variable d'environnement
 const DEEPSEEK_API_KEY = process.env.DEESEEK_API_KEY;
