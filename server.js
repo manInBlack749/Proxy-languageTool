@@ -35,19 +35,27 @@ app.post("/correct", async (req, res) => {
       })
     });
 
+    // si l’API OpenRouter répond avec une erreur HTTP
     if (!response.ok) {
       const errorText = await response.text();
-      return res.status(response.status).json({ error: errorText });
+
+      return res.status(response.status).json({
+        corrected: "",
+        error: `Erreur API (${response.status}): ${errorText}`
+      });
     }
 
     const data = await response.json();
     const corrected = data.choices?.[0]?.message?.content?.trim() || "";
 
-    // 🔹 Toujours renvoyer un objet JSON clair
+    // ✅ Toujours envoyer un objet JSON bien formaté
     res.json({ corrected });
   } catch (error) {
     console.error("❌ Erreur serveur :", error);
-    res.status(500).json({ error: "Erreur interne du serveur" });
+    res.status(500).json({
+      corrected: "",
+      error: "Erreur interne du serveur"
+    });
   }
 });
 
