@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Route GET de test
 app.get("/", (req, res) => {
-    res.send("Serveur DeepSeek/GPT-OSS 120B en ligne. Utilise POST /correct");
+    res.send("Serveur GPT-OSS-20B en ligne. Utilise POST /correct pour corriger le texte.");
 });
 
 // Route POST pour corriger texte
@@ -28,7 +28,7 @@ app.post("/correct", async (req, res) => {
         const text = req.body.text;
         if (!text) return res.status(400).json({ error: "Aucun texte fourni" });
 
-        // Appel OpenRouter GPT-OSS 120B
+        // Appel OpenRouter GPT-OSS-20B
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -36,9 +36,9 @@ app.post("/correct", async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "gpt-oss-120b",
+                model: "gpt-oss-20b",
                 messages: [
-                    { role: "user", content: `Corrige le texte suivant en français : "${text}"` }
+                    { role: "user", content: `Corrige le texte suivant en français, orthographe et grammaire : "${text}"` }
                 ]
             })
         });
@@ -56,17 +56,17 @@ app.post("/correct", async (req, res) => {
             console.log("Texte corrigé :", corrected);
             return res.json({ corrected });
         } else {
-            console.warn("Aucune réponse de GPT-OSS 120B :", JSON.stringify(data));
+            console.warn("Aucune réponse du modèle :", JSON.stringify(data));
             return res.json({ corrected: "⚠ Aucun texte reçu du modèle." });
         }
 
     } catch (err) {
-        console.error("⚠ Erreur lors de l'appel à GPT-OSS 120B :", err);
+        console.error("⚠ Erreur lors de l'appel à GPT-OSS-20B :", err);
         res.status(500).json({ error: `Erreur lors de l'appel au modèle : ${err.message}` });
     }
 });
 
 // Démarrage du serveur
 app.listen(PORT, () => {
-    console.log(`🚀 Serveur GPT-OSS 120B en ligne sur le port ${PORT}`);
+    console.log(`🚀 Serveur GPT-OSS-20B en ligne sur le port ${PORT}`);
 });
