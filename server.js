@@ -11,7 +11,10 @@ app.post("/correct", async (req, res) => {
     const { text } = req.body;
 
     if (!text) {
-      return res.status(400).json({ error: "Aucun texte fourni" });
+      return res.status(400).json({
+        corrected: "",
+        error: "Aucun texte fourni"
+      });
     }
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -35,21 +38,31 @@ app.post("/correct", async (req, res) => {
       })
     });
 
-    // si l’API OpenRouter répond avec une erreur HTTP
-    if (!response.ok) {
-      const errorText = await response.text();
+    const raw = await response.text();
 
+    if (!response.ok) {
       return res.status(response.status).json({
         corrected: "",
-        error: `Erreur API (${response.status}): ${errorText}`
+        error: `Erreur API (${response.status}): ${raw}`
       });
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return res.status(500).json({
+        corrected: "",
+        error: "Réponse API invalide"
+      });
+    }
+
     const corrected = data.choices?.[0]?.message?.content?.trim() || "";
 
-    // ✅ Toujours envoyer un objet JSON bien formaté
-    res.json({ corrected });
+    res.json({
+      corrected,
+      error: ""
+    });
   } catch (error) {
     console.error("❌ Erreur serveur :", error);
     res.status(500).json({
