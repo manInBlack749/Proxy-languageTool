@@ -1,77 +1,72 @@
-import express from "express";
-import fetch from "node-fetch";
+ // server.js
+const express = require('express');
+const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+// Récupère la clé API depuis la variable d'environnement
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+if (!DEEPSEEK_API_KEY) {
+    console.error("⚠ Attention : DEEPSEEK_API_KEY non défini !");
+    process.exit(1);
+}
 
-app.post("/correct", async (req, res) => {
-  try {
-    const { text } = req.body;
+// Middleware pour parser JSON
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-    if (!text) {
-      return res.status(400).json({
-        corrected: "",
-        error: "Aucun texte fourni"
-      });
-    }
+// Route GET de test
+app.get('/', (req, res) => {
+    res.send('Le serveur fonctionne ! Utilise POST /correct pour corriger le texte.');
+});
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "openchat/openchat-3.5-0106",
-        messages: [
-          {
-            role: "system",
-            content: "Tu es un correcteur de texte français. Corrige uniquement l’orthographe, la grammaire et le sens si nécessaire. Si le texte est déjà correct, renvoie-le tel quel. Réponds uniquement par le texte corrigé, sans explication ni guillemets."
-          },
-          {
-            role: "user",
-            content: text
-          }
-        ]
-      })
-    });
-
-    const raw = await response.text();
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        corrected: "",
-        error: `Erreur API (${response.status}): ${raw}`
-      });
-    }
-
-    let data;
+// Fonction pour appeler DeepSeek/OpenRouter
+async function correctTextWithDeepSeek(text) {
     try {
-      data = JSON.parse(raw);
-    } catch (e) {
-      return res.status(500).json({
-        corrected: "",
-        error: "Réponse API invalide"
-      });
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "gpt-oss-20b", // Modèle à utiliser
+                messages: [{ role: "user", content: `Corrige le texte suivant en français : "${text}"` }]
+            })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            return { corrected: "", error: `Erreur API (${response.status}): ${errText}` };
+        }
+
+        const data = await response.json();
+
+        // Vérifie la structure de la réponse
+        if (data.choices && data.choices.length > 0) {
+            return { corrected: data.choices[0].message.content };
+        } else {
+            return { corrected: text }; // Retourne le texte original si pas de correction
+        }
+
+    } catch (err) {
+        console.error('Erreur DeepSeek :', err);
+        return { corrected: text, error: `Erreur lors de l'appel à DeepSeek : ${err.message}` };
     }
+}
 
-    const corrected = data.choices?.[0]?.message?.content?.trim() || "";
+// Route POST pour corriger le texte
+app.post('/correct', async (req, res) => {
+    const text = req.body.text;
+    if (!text) return res.status(400).json({ corrected: "", error: "Aucun texte fourni" });
 
-    res.json({
-      corrected,
-      error: ""
-    });
-  } catch (error) {
-    console.error("❌ Erreur serveur :", error);
-    res.status(500).json({
-      corrected: "",
-      error: "Erreur interne du serveur"
-    });
-  }
+    const result = await correctTextWithDeepSeek(text);
+    res.json(result);
 });
 
+// Démarre le serveur
 app.listen(PORT, () => {
-  console.log(`🚀 Serveur lancé sur le port ${PORT}`);
-});
+    console.log(`🚀 Serveur DeepSeek en ligne sur le port ${PORT}`);
+});     
