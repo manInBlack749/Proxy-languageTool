@@ -21,11 +21,11 @@ app.post("/correct", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "openchat/openchat-3.5-0106", // modèle économique et adapté
+        model: "openchat/openchat-3.5-0106",
         messages: [
           {
             role: "system",
-            content: "Tu es un correcteur de texte français. Corrige uniquement l’orthographe, la grammaire, les accords et le sens si nécessaire. Si le texte est déjà correct, renvoie-le tel quel. Réponds uniquement par le texte corrigé, sans explication, sans mise en forme, sans guillemets."
+            content: "Tu es un correcteur de texte français. Corrige uniquement l’orthographe, la grammaire et le sens si nécessaire. Si le texte est déjà correct, renvoie-le tel quel. Réponds uniquement par le texte corrigé, sans explication ni guillemets."
           },
           {
             role: "user",
@@ -43,6 +43,7 @@ app.post("/correct", async (req, res) => {
     const data = await response.json();
     const corrected = data.choices?.[0]?.message?.content?.trim() || "";
 
+    // 🔹 Toujours renvoyer un objet JSON clair
     res.json({ corrected });
   } catch (error) {
     console.error("❌ Erreur serveur :", error);
