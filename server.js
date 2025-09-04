@@ -33,7 +33,7 @@ async function correctTextWithDeepSeek(text) {
             },
             body: JSON.stringify({
                 model: "gpt-oss-20b", // Modèle à utiliser
-                messages: [{ role: "user", content: `Corrige le texte suivant en français : "${text}"` }]
+                messages: [{ role: "user", content: `Corrige le texte suivant en français et surtout ne rajoute rien renvoit juste la phrase corrigé : "${text}"` }]
             })
         });
 
